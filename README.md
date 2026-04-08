@@ -11,6 +11,9 @@ tags:
 ---
 
 # CyberTriage: Enterprise Network Defense Environment
+![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
+![OpenAI](https://img.shields.io/badge/OpenAI-412991?style=for-the-badge&logo=openai&logoColor=white)
 
 ## Real-World Utility
 Modern enterprise servers are bombarded with thousands of requests per second. Human analysts cannot triage network logs fast enough to block zero-day threats. **CyberTriage** is a highly realistic OpenEnv simulation designed to test Agentic LLMs on their ability to act as an automated Level 1 Security Operations Center (SOC) Analyst. The agent must read raw network logs, classify threats, and issue precise IP quarantines without disrupting legitimate business traffic.
