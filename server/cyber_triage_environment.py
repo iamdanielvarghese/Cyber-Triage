@@ -247,6 +247,9 @@ class CyberTriageEnvironment(Environment[CyberTriageAction, CyberTriageObservati
             and action.classification == "Safe"
         ):
             reward = -1.0
+        
+        grader = max(0.01, min(0.99,float(grader)))
+        reward = max(0.01, min(0.99,float(reward)))
 
         obs_result = CyberTriageObservation(
             log_id=obs.log_id,
