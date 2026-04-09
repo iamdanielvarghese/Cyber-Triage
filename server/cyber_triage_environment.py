@@ -184,7 +184,7 @@ class CyberTriageEnvironment(Environment[CyberTriageAction, CyberTriageObservati
                 payload_snippet="Failed password for invalid user admin",
                 failed_login_attempts=247,
                 done=False,
-                reward=0.0,
+                reward=0.01,
                 metadata={"task": task},
             )
         elif task == "payload_inspector":
@@ -195,7 +195,7 @@ class CyberTriageEnvironment(Environment[CyberTriageAction, CyberTriageObservati
                 payload_snippet="admin' OR '1'='1' --",
                 failed_login_attempts=0,
                 done=False,
-                reward=0.0,
+                reward=0.01,
                 metadata={"task": task},
             )
         else:
@@ -206,7 +206,7 @@ class CyberTriageEnvironment(Environment[CyberTriageAction, CyberTriageObservati
                 payload_snippet=_HARD_PAYLOAD_SNIPPET,
                 failed_login_attempts=3,
                 done=False,
-                reward=0.0,
+                reward=0.01,
                 metadata={"task": task},
             )
         self._last_observation = obs
