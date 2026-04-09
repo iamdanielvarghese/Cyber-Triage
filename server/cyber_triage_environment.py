@@ -70,17 +70,17 @@ class CyberTriageEnvironment(Environment[CyberTriageAction, CyberTriageObservati
         Deterministic grader for the Brute Force Blocker task.
 
         Returns:
-            1.0 — "Critical Attack" and quarantine_ip equals source_ip exactly.
+            0.99 — "Critical Attack" and quarantine_ip equals source_ip exactly.
             0.5 — "Critical Attack" but quarantine_ip is missing (None).
-            0.0 — all other cases.
+            0.01 — all other cases.
         """
         if action.classification != "Critical Attack":
-            return 0.0
+            return 0.01
         if action.quarantine_ip == source_ip:
-            return 1.0
+            return 0.99
         if action.quarantine_ip is None:
             return 0.5
-        return 0.0
+        return 0.01
 
     @staticmethod
     def grade_payload_inspector(
@@ -91,17 +91,17 @@ class CyberTriageEnvironment(Environment[CyberTriageAction, CyberTriageObservati
         Deterministic grader for the Payload Inspector (SQL injection) task.
 
         Returns:
-            1.0 — "Critical Attack" and quarantine_ip equals source_ip.
+            0.99 — "Critical Attack" and quarantine_ip equals source_ip.
             0.5 — "Suspicious" and quarantine_ip equals source_ip.
-            0.0 — otherwise.
+            0.01 — otherwise.
         """
         if action.quarantine_ip != source_ip:
-            return 0.0
+            return 0.01
         if action.classification == "Critical Attack":
-            return 1.0
+            return 0.99
         if action.classification == "Suspicious":
             return 0.5
-        return 0.0
+        return 0.01
 
     @staticmethod
     def grade_multi_vector_anomaly(
@@ -112,17 +112,17 @@ class CyberTriageEnvironment(Environment[CyberTriageAction, CyberTriageObservati
         Deterministic grader for the Multi-Vector Anomaly (dropper / execution) task.
 
         Returns:
-            1.0 — "Critical Attack" and quarantine_ip equals source_ip.
+            0.99 — "Critical Attack" and quarantine_ip equals source_ip.
             0.5 — "Suspicious" and quarantine_ip equals source_ip.
-            0.0 — otherwise.
+            0.01 — otherwise.
         """
         if action.quarantine_ip != source_ip:
-            return 0.0
+            return 0.01
         if action.classification == "Critical Attack":
-            return 1.0
+            return 0.99
         if action.classification == "Suspicious":
             return 0.5
-        return 0.0
+        return 0.01
 
     @staticmethod
     def _payload_indicates_sql_injection(payload_snippet: str) -> bool:
@@ -236,20 +236,20 @@ class CyberTriageEnvironment(Environment[CyberTriageAction, CyberTriageObservati
         reward: float = grader
 
         if self._is_clear_brute_force(obs) and action.classification == "Safe":
-            reward = -1.0
+            reward = 0.01
         elif (
             self._payload_indicates_sql_injection(obs.payload_snippet)
             and action.classification == "Safe"
         ):
-            reward = -1.0
+            reward = 0.01
         elif (
             self._payload_indicates_wget_and_execution(obs.payload_snippet)
             and action.classification == "Safe"
         ):
-            reward = -1.0
-        
-        grader = max(0.01, min(0.99,float(grader)))
-        reward = max(0.01, min(0.99,float(reward)))
+            reward = 0.01
+
+        grader = max(0.01, min(0.99, float(grader)))
+        reward = max(0.01, min(0.99, float(reward)))
 
         obs_result = CyberTriageObservation(
             log_id=obs.log_id,
