@@ -26,6 +26,11 @@ except ImportError:
 
 BRUTE_FORCE_THRESHOLD: Final[int] = 100
 
+# Per-task scores must lie strictly in (0, 1). Use an interior band so validators
+# that reject 0.0/1.0 (and floating edge cases) still pass.
+SCORE_FAIL: Final[float] = 0.02
+SCORE_FULL: Final[float] = 0.98
+
 TaskId = Literal[
     "brute_force_blocker",
     "payload_inspector",
@@ -70,17 +75,17 @@ class CyberTriageEnvironment(Environment[CyberTriageAction, CyberTriageObservati
         Deterministic grader for the Brute Force Blocker task.
 
         Returns:
-            0.99 — "Critical Attack" and quarantine_ip equals source_ip exactly.
+            SCORE_FULL — "Critical Attack" and quarantine_ip equals source_ip exactly.
             0.5 — "Critical Attack" but quarantine_ip is missing (None).
-            0.01 — all other cases.
+            SCORE_FAIL — all other cases.
         """
         if action.classification != "Critical Attack":
-            return 0.01
+            return SCORE_FAIL
         if action.quarantine_ip == source_ip:
-            return 0.99
+            return SCORE_FULL
         if action.quarantine_ip is None:
             return 0.5
-        return 0.01
+        return SCORE_FAIL
 
     @staticmethod
     def grade_payload_inspector(
@@ -91,17 +96,17 @@ class CyberTriageEnvironment(Environment[CyberTriageAction, CyberTriageObservati
         Deterministic grader for the Payload Inspector (SQL injection) task.
 
         Returns:
-            0.99 — "Critical Attack" and quarantine_ip equals source_ip.
+            SCORE_FULL — "Critical Attack" and quarantine_ip equals source_ip.
             0.5 — "Suspicious" and quarantine_ip equals source_ip.
-            0.01 — otherwise.
+            SCORE_FAIL — otherwise.
         """
         if action.quarantine_ip != source_ip:
-            return 0.01
+            return SCORE_FAIL
         if action.classification == "Critical Attack":
-            return 0.99
+            return SCORE_FULL
         if action.classification == "Suspicious":
             return 0.5
-        return 0.01
+        return SCORE_FAIL
 
     @staticmethod
     def grade_multi_vector_anomaly(
@@ -112,17 +117,17 @@ class CyberTriageEnvironment(Environment[CyberTriageAction, CyberTriageObservati
         Deterministic grader for the Multi-Vector Anomaly (dropper / execution) task.
 
         Returns:
-            0.99 — "Critical Attack" and quarantine_ip equals source_ip.
+            SCORE_FULL — "Critical Attack" and quarantine_ip equals source_ip.
             0.5 — "Suspicious" and quarantine_ip equals source_ip.
-            0.01 — otherwise.
+            SCORE_FAIL — otherwise.
         """
         if action.quarantine_ip != source_ip:
-            return 0.01
+            return SCORE_FAIL
         if action.classification == "Critical Attack":
-            return 0.99
+            return SCORE_FULL
         if action.classification == "Suspicious":
             return 0.5
-        return 0.01
+        return SCORE_FAIL
 
     @staticmethod
     def _payload_indicates_sql_injection(payload_snippet: str) -> bool:
@@ -184,7 +189,7 @@ class CyberTriageEnvironment(Environment[CyberTriageAction, CyberTriageObservati
                 payload_snippet="Failed password for invalid user admin",
                 failed_login_attempts=247,
                 done=False,
-                reward=0.01,
+                reward=SCORE_FAIL,
                 metadata={"task": task},
             )
         elif task == "payload_inspector":
@@ -195,7 +200,7 @@ class CyberTriageEnvironment(Environment[CyberTriageAction, CyberTriageObservati
                 payload_snippet="admin' OR '1'='1' --",
                 failed_login_attempts=0,
                 done=False,
-                reward=0.01,
+                reward=SCORE_FAIL,
                 metadata={"task": task},
             )
         else:
@@ -206,7 +211,7 @@ class CyberTriageEnvironment(Environment[CyberTriageAction, CyberTriageObservati
                 payload_snippet=_HARD_PAYLOAD_SNIPPET,
                 failed_login_attempts=3,
                 done=False,
-                reward=0.01,
+                reward=SCORE_FAIL,
                 metadata={"task": task},
             )
         self._last_observation = obs
@@ -236,20 +241,20 @@ class CyberTriageEnvironment(Environment[CyberTriageAction, CyberTriageObservati
         reward: float = grader
 
         if self._is_clear_brute_force(obs) and action.classification == "Safe":
-            reward = 0.01
+            reward = SCORE_FAIL
         elif (
             self._payload_indicates_sql_injection(obs.payload_snippet)
             and action.classification == "Safe"
         ):
-            reward = 0.01
+            reward = SCORE_FAIL
         elif (
             self._payload_indicates_wget_and_execution(obs.payload_snippet)
             and action.classification == "Safe"
         ):
-            reward = 0.01
+            reward = SCORE_FAIL
 
-        grader = max(0.01, min(0.99, float(grader)))
-        reward = max(0.01, min(0.99, float(reward)))
+        grader = max(SCORE_FAIL, min(SCORE_FULL, float(grader)))
+        reward = max(SCORE_FAIL, min(SCORE_FULL, float(reward)))
 
         obs_result = CyberTriageObservation(
             log_id=obs.log_id,
